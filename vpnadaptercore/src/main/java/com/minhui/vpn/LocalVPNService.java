@@ -4,20 +4,15 @@ package com.minhui.vpn;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
+import java.io.FileDescriptor;
+
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.VpnService;
 import android.os.Build;
-import android.os.ParcelFileDescriptor;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import java.nio.channels.Selector;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-public class LocalVPNService extends VpnService {
+public class LocalVPNService extends VpnService implements IVpnService {
     public static final String ACTION_START_VPN = "com.minhui.START_VPN";
     public static final String ACTION_CLOSE_VPN = "com.minhui.roav.CLOSE_VPN";
     private static final String FACEBOOK_APP = "com.facebook.katana";
@@ -34,47 +29,14 @@ public class LocalVPNService extends VpnService {
     private static final String CHINA_DNS_FIRST = "114.114.114.114";
     public static final String BROADCAST_VPN_STATE = "com.minhui.localvpn.VPN_STATE";
     public static final String SELECT_PACKAGE_ID = "select_protect_package_id";
-    private static LocalVPNService instance;
-
-    private ParcelFileDescriptor vpnInterface = null;
-
-    private ConcurrentLinkedQueue<Packet> networkToDeviceQueue;
-    private ExecutorService executorService = Executors.newFixedThreadPool(2);
-    private Selector selector;
-    private static boolean isRunning = false;
-    private VPNServer vpnServer;
-    private VPNClient vpnInPutRunnable;
     private String selectPackage;
+
+    private VpnController controller;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-    }
-
-    public static boolean isRunning() {
-        return isRunning;
-    }
-
-    private void setupVPN() {
-        Builder builder = new Builder();
-        builder.addAddress(VPN_ADDRESS, 32);
-        builder.addRoute(VPN_ROUTE, 0);
-        //某些国外的手机例如google pixel 默认的dns解析器地址不是8.8.8.8 ，不设置会出错
-        builder.addDnsServer(GOOGLE_DNS_FIRST);
-        builder.addDnsServer(CHINA_DNS_FIRST);
-        builder.addDnsServer(GOOGLE_DNS_SECOND);
-        builder.addDnsServer(AMERICA);
-        builder.setMtu(1280);
-        try {
-            if (selectPackage != null) {
-                builder.addAllowedApplication(selectPackage);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-      /*   addAllowedApp(builder, YOUTUBE_APP);*/
-        vpnInterface = builder.setSession(VPNConnectManager.getInstance().getAppName()).establish();
+        controller = new VpnController(this, this);
     }
 
     private void addAllowedApp(Builder builder, String appName) {
@@ -98,84 +60,45 @@ public class LocalVPNService extends VpnService {
         }
         String action = intent.getAction();
         if (ACTION_START_VPN.equals(action)) {
-            if (isRunning) {
-                return START_STICKY;
-            }
             selectPackage = intent.getStringExtra(SELECT_PACKAGE_ID);
-            startLocalVPN();
+            controller.startLocalVPN();
         } else {
-            if (!isRunning) {
-                return START_STICKY;
-            }
-            cleanup();
+            controller.cleanup();
         }
         return START_STICKY;
     }
 
-    private void startLocalVPN() {
-
-        try {
-            isRunning = true;
-            setupVPN();
-            instance = this;
-            selector = Selector.open();
-            networkToDeviceQueue = new ConcurrentLinkedQueue<>();
-
-            vpnServer = new VPNServer(this, networkToDeviceQueue, selector);
-            vpnInPutRunnable = new VPNClient(vpnInterface.getFileDescriptor(), vpnServer, networkToDeviceQueue, selector);
-            executorService.submit(vpnInPutRunnable);
-            executorService.submit(vpnServer);
-            LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(BROADCAST_VPN_STATE));
-            Log.i(TAG, "Started");
-            VPNConnectManager.getInstance().setLastVpnStartTime(System.currentTimeMillis());
-            PortHostService.startParse(getApplicationContext());
-        } catch (Exception e) {
-            Log.w(TAG, "Error starting service", e);
-            cleanup();
-        }
-    }
-
-
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         Log.i(TAG, "Stopped");
     }
-
-    private void cleanup() {
-        Log.i(TAG, "clean up");
-        isRunning = false;
-        networkToDeviceQueue = null;
-        PortHostService.getInstance().getAndRefreshConnInfo();
-        PortHostService.stopParse(getApplicationContext());
-        closeRunnable(vpnServer);
-        closeRunnable(vpnInPutRunnable);
-        SocketUtils.closeResources(vpnInterface);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(BROADCAST_VPN_STATE));
-
-        instance = null;
-    }
-
-    private void closeRunnable(CloseableRun run) {
-        if (run != null) {
-            run.closeRun();
-        }
-    }
-
 
     @Override
     public void onRevoke() {
         super.onRevoke();
-        cleanup();
+        controller.cleanup();
     }
 
-    public static LocalVPNService getInstance() {
-        return instance;
+    @Override
+    public FileDescriptor getInterceptFd() {
+        Builder builder = new Builder();
+        builder.addAddress(VPN_ADDRESS, 32);
+        builder.addRoute(VPN_ROUTE, 0);
+        //某些国外的手机例如google pixel 默认的dns解析器地址不是8.8.8.8 ，不设置会出错
+        builder.addDnsServer(GOOGLE_DNS_FIRST);
+        builder.addDnsServer(CHINA_DNS_FIRST);
+        builder.addDnsServer(GOOGLE_DNS_SECOND);
+        builder.addDnsServer(AMERICA);
+        builder.setMtu(1280);
+        try {
+            if (selectPackage != null) {
+                builder.addAllowedApplication(selectPackage);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        /*   addAllowedApp(builder, YOUTUBE_APP);*/
+        return builder.setSession(VPNConnectManager.getInstance().getAppName()).establish().getFileDescriptor();
     }
-
-    public VPNServer getVpnServer() {
-        return vpnServer;
-    }
-
 }

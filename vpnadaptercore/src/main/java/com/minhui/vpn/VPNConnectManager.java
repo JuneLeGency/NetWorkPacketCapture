@@ -147,7 +147,7 @@ public class VPNConnectManager {
     public List<BaseNetConnection> getAllNetConnection() {
         List<BaseNetConnection> netConnections = null;
         try {
-            netConnections = ((LocalVPNService) LocalVPNService.getInstance()).getVpnServer().getNetConnections();
+            netConnections = VpnController.getInstance().getVpnServer().getNetConnections();
         } catch (Exception e) {
 
         }

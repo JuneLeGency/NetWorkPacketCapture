@@ -22,6 +22,7 @@ import com.minhui.vpn.ThreadProxy;
 import com.minhui.vpn.TimeFormatUtil;
 import com.minhui.vpn.VPNConnectManager;
 import com.minhui.vpn.VPNConstants;
+import com.minhui.vpn.VpnController;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ public class CaptureFragment extends BaseFragment {
     private BroadcastReceiver vpnStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (LocalVPNService.isRunning()) {
+            if (VpnController.isRunning()) {
                 startTimer();
             } else {
                 cancelTimer();
@@ -111,7 +112,7 @@ public class CaptureFragment extends BaseFragment {
         });
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(vpnStateReceiver,
                 new IntentFilter(LocalVPNService.BROADCAST_VPN_STATE));
-        if (LocalVPNService.isRunning()) {
+        if (VpnController.isRunning()) {
             startTimer();
         }
         getDataAndRefreshView();

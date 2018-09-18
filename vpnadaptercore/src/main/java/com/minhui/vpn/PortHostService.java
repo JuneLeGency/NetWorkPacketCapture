@@ -42,7 +42,7 @@ public class PortHostService extends Service {
 
 
     public List<BaseNetConnection> getAndRefreshConnInfo() {
-        LocalVPNService instance = LocalVPNService.getInstance();
+        VpnController instance = VpnController.getInstance();
         if (instance == null) {
             return null;
         }
@@ -58,8 +58,7 @@ public class PortHostService extends Service {
     }
 
     public void refreshConnInfo() {
-
-        LocalVPNService instance = LocalVPNService.getInstance();
+        VpnController instance = VpnController.getInstance();
         if (instance == null) {
             return;
         }

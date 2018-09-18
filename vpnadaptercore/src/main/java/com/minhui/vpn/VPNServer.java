@@ -1,6 +1,5 @@
 package com.minhui.vpn;
 
-import android.net.VpnService;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -22,7 +21,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 class VPNServer implements CloseableRun {
     private String TAG = VPNServer.class.getSimpleName();
     private static final int MAX_CACHE_TCP_SIZE = 20; // XXX: Is this ideal?
-    VpnService vpnService;
+    IVpnService vpnService;
     ConcurrentLinkedQueue<Packet> outputQueue;
     Selector selector;
     private final Object tcpLock = new Object();
@@ -48,7 +47,7 @@ class VPNServer implements CloseableRun {
             });
 
 
-    VPNServer(VpnService vpnService, ConcurrentLinkedQueue<Packet> outputQueue, Selector selector) {
+    VPNServer(IVpnService vpnService, ConcurrentLinkedQueue<Packet> outputQueue, Selector selector) {
         this.vpnService = vpnService;
         this.outputQueue = outputQueue;
         this.selector = selector;
@@ -265,7 +264,7 @@ class VPNServer implements CloseableRun {
 
     private void checkAndAddConn(BaseNetConnection connection, List<BaseNetConnection> netConnections) {
         String packageName = VPNConnectManager.getInstance().getContext().getPackageName();
-        String selectPackage = ((LocalVPNService) LocalVPNService.getInstance()).getSelectPackage();
+        String selectPackage = VpnController.getInstance().getSelectPackage();
 
         if (connection.appInfo == null) {
             netConnections.add(connection);

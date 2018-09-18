@@ -4,7 +4,6 @@ package com.minhui.vpn;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
-import android.net.VpnService;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -18,7 +17,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -30,7 +28,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class TCPConnection extends BaseNetConnection implements Serializable {
     private static final String TAG = TCPConnection.class.getSimpleName();
     private static final int VALID_TCP_DATA_SIZE = 10;
-    private final VpnService vpnService;
+    private final IVpnService vpnService;
     private final Selector selector;
     private final VPNServer vpnServer;
     private final ConcurrentLinkedQueue<Packet> outputQueue;
@@ -63,7 +61,7 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
     private final TcpDataSaveHelper tcpDataSaveHelper;
     private final String lastVpnStartTimeStr;
 
-    TCPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, ConcurrentLinkedQueue<Packet> outputQueue) {
+    TCPConnection(IVpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, ConcurrentLinkedQueue<Packet> outputQueue) {
         super();
         this.vpnService = vpnService;
         this.selector = selector;

@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.Locale;
 
 /**
+ * https://www.tutorialspoint.com/ipv4/ipv4_packet_structure.htm
  * Representation of an IP Packet
  */
 
@@ -478,20 +479,30 @@ class Packet implements Serializable {
      */
     static class IP4Header implements Serializable {
 
+        // version  ihl 1 bit
         public byte version;
         byte IHL;
+
         int headerLength;
+        //QOS 相关  包含escp  ecn
         short typeOfService;
         int totalLength;
 
+        //三部分 Identification 0-15  flag 16-18 Fragment Offset 报文碎片相关
         int identificationAndFlagsAndFragmentOffset;
 
+        //避免循环网络
         short TTL;
+
+        //网络协议
         private short protocolNum;
+
         TransportProtocol protocol;
+
         int headerChecksum;
 
         InetAddress sourceAddress;
+
         InetAddress destinationAddress;
 
         int optionsAndPadding;
@@ -550,6 +561,7 @@ class Packet implements Serializable {
         }
 
         private IP4Header(ByteBuffer buffer) throws UnknownHostException {
+            //前8个字节 版本、IHL
             byte versionAndIHL = buffer.get();
             this.version = (byte) (versionAndIHL >> 4);
             this.IHL = (byte) (versionAndIHL & 0x0F);

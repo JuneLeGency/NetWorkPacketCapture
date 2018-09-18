@@ -1,7 +1,5 @@
 package com.minhui.vpn;
 
-import android.net.VpnService;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -21,7 +19,7 @@ public class UDPConnection extends BaseNetConnection {
 
 
     private static final String TAG = UDPConnection.class.getSimpleName();
-    private final VpnService vpnService;
+    private final IVpnService vpnService;
     private final Selector selector;
     private final VPNServer vpnServer;
     private final VPNServer.KeyHandler keyHandler;
@@ -34,7 +32,7 @@ public class UDPConnection extends BaseNetConnection {
     private static final int HEADER_SIZE = Packet.IP4_HEADER_SIZE + Packet.UDP_HEADER_SIZE;
 
 
-    public UDPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, Queue<Packet> outputQueue) {
+    public UDPConnection(IVpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, Queue<Packet> outputQueue) {
         this.vpnService = vpnService;
         this.selector = selector;
         this.vpnServer = vpnServer;

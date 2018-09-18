@@ -76,7 +76,7 @@ public class VPNClient implements CloseableRun {
                     dataSent = false;
                 }
                 Packet packet = networkToDeviceQueue.poll();
-                boolean dataRecevied = false;
+                boolean dataReceived = false;
                 if (packet != null && !packet.cancelSending) {
                     ByteBuffer bufferFromNetwork = packet.backingBuffer;
                     bufferFromNetwork.flip();
@@ -98,9 +98,9 @@ public class VPNClient implements CloseableRun {
                     if (packet.releaseAfterWritingToDevice) {
                         packet.backingBuffer = null;
                     }
-                    dataRecevied = true;
+                    dataReceived = true;
                 }
-                if (!dataSent && !dataRecevied) {
+                if (!dataSent && !dataReceived) {
                     Thread.sleep(5);
                 }
             } catch (Exception e) {
